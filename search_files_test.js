@@ -1,69 +1,112 @@
+
 var app=(function(){
 
-    var result=[];
+    var readDir=function(folder,done){
 
-    var readData=function(folder,term){
-    
-        var thisFolder=folder;
-    
+        var result=[];
+
         fs.readdir(folder,function(err,files){
+            
+            var pending=files.length;
 
-            if(!err){
-                for(var file in files){
-
-                    var extension=path.extname(files[file]);
-                    var thisPath=thisFolder+'\\'+files[file]; 
+            if(!pending){
+                done(null,result);
+            }
         
-                    console.log("checking "+thisPath)
-            
-                    var isDirectory=fs.statSync(thisPath).isDirectory();
-                    
-                    if(isDirectory){
-                        readData(thisPath,term);
-                    }else{
-            
-                        if(extension=='.php'){
-            
-                            fs.readFile(thisPath, 'utf8', function(err, data) {
-                                
-                                if(data){
-                                    if(data.indexOf(term) >= 0){
-                                        result.push("match found in "+thisPath);
+            files.forEach(function(file) {
 
-                                        //console.log("match found in "+thisPath);
-                                    }
-                                }
-                            });
+                var fileExtension=path.extname(file);
+                var filePath=path.resolve(folder, file);
+            
+                fs.stat(filePath, function(err, stat) {
+        
+                    if (stat && stat.isDirectory()) {
+            
+                        readDir(filePath, function(err, response) {
+            
+                            result = result.concat(response);
+            
+                            if (!--pending){
+                                done(null, result);
+                            }
+                        });
+            
+                    } else {
+                        result.push(filePath);
+
+                        if (!--pending){
+                            done(null, result);
                         }
-                    } 
+                    }
+                });
+            });
+        });
+    }
+    
+    var readFiles=function(path,term,result){
 
+        fs.readFile(path, 'utf8', function(err, data) {
+            if(data){
+                if(data.indexOf(term) >= 0){
+                  result("match found in "+path);
                 }
             }
         });
-    }
+    
+    };
 
-    var run=function() {
+    var getTotal=function(){
+
+        readDir(myFolder, function(err, result) {
+        
+            if (err){
+                console.log(err);
+            }else{
+                console.log(result.length+" files are affected");
+            }
+          });
+    }
+    
+    var run=function(){
+
         console.log("process started");
         console.log("start is "+myFolder);
         console.log("searching for "+myTerm);
-        readData(myFolder,myTerm);
+    
+        readDir(myFolder, function(err, result) {
+        
+            if (err){
+                console.log(err);
+            }else{
+                console.log("searching in "+result.length+" files");
+
+                for(var file in result){
+                    readFiles(result[file],myTerm,function(response){
+                        console.log(response);
+                    })
+                }
+            }
+        
+          });
     }
 
     return {
-        run:run
+        run:run,
+        affected:getTotal
     }
     
 })(myFolder,myTerm);
 
-/*Ziel ist es die Variable result mit den betroffenen Dateien zu befüllen. Aufgrund der Asynchronität und der Rekusrion finde ich keinen weg, dies zu tun */
-
 const fs = require('fs');
 const path = require('path');
 
-var myFolder="your start folder";
-var myTerm="what you are searching for";
+var myFolder="your folder";
+var myTerm="your search value";
 
+app.affected();
 app.run();
+
+
 
 
 
