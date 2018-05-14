@@ -1,5 +1,18 @@
-
 var app=(function(){
+
+    var ask=function(question, callback) {
+
+        var r = rl.createInterface({
+                input: process.stdin,
+                output: process.stdout
+            });
+
+        r.question(question + '\n', function(answer) {
+
+            r.close();
+            callback(answer);
+        });
+    }
 
     var readDir=function(folder,done){
 
@@ -43,70 +56,80 @@ var app=(function(){
         });
     }
     
-    var readFiles=function(path,term,result){
+    var readFiles=function(files,term,done){
 
-        fs.readFile(path, 'utf8', function(err, data) {
-            if(data){
-                if(data.indexOf(term) >= 0){
-                  result("match found in "+path);
+        var array=[];
+        var pending=files.length;
+
+        files.forEach(function(file){
+            fs.readFile(file, 'utf8', function(err, data) {
+                if(data){
+                    if(data.indexOf(term) >= 0){
+                        array.push("match found in "+file);
+                    }
                 }
-            }
+
+                if(!--pending){
+                    done(array);
+                }
+            });
         });
-    
-    };
-
-    var getTotal=function(){
-
-        readDir(myFolder, function(err, result) {
-        
-            if (err){
-                console.log(err);
-            }else{
-                console.log(result.length+" files are affected");
-            }
-          });
     }
-    
+
     var run=function(){
 
         console.log("process started");
         console.log("start is "+myFolder);
-        console.log("searching for "+myTerm);
-    
+        console.log("searching for \""+myTerm+"\"");
+        
         readDir(myFolder, function(err, result) {
         
-            if (err){
-                console.log(err);
-            }else{
+            if(!err){
                 console.log("searching in "+result.length+" files");
 
-                for(var file in result){
-                    readFiles(result[file],myTerm,function(response){
-                        console.log(response);
-                    })
-                }
+                readFiles(result,myTerm,function(response){
+                    
+                    if(response!=""){
+
+                        console.log("found \""+myTerm+"\" in "+response.length+" files");
+
+                        ask("Show results? (Y/N)", function(answer){
+                            
+                            switch(answer.toUpperCase()){
+                                case "Y":
+                    
+                                    response.forEach(function(text){
+                                        console.log(text);
+                                    });
+
+                                    break;
+                                default:
+                                    console.log("end");
+                            }
+
+                        });
+                    }else{
+                        console.log("no files with \""+myTerm+"\" found");
+                    }
+                })
+               
+            }else{
+                console.log(err);
             }
-        
-          });
+        });
     }
 
     return {
-        run:run,
-        affected:getTotal
+        run:run
     }
     
 })(myFolder,myTerm);
 
 const fs = require('fs');
 const path = require('path');
+const rl = require('readline');
 
-var myFolder="your folder";
-var myTerm="your search value";
+var myFolder="your folder / location";
+var myTerm="your value";
 
-app.affected();
 app.run();
-
-
-
-
-
