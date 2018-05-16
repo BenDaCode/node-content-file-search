@@ -1,5 +1,12 @@
 
 var app=(function(){
+
+    var runtime=0;
+    var starttime=0;
+    var endtime=0;
+    var myFolder="";
+    var myTerm="";
+
     //command prompt
     var cmd={
         ask:function(question, callback) {
@@ -91,10 +98,12 @@ var app=(function(){
     //programm logic
     var run=function(){
 
+        starttime=new Date().getTime();
+
         console.log("process started");
         cmd.ask("select dircetory:", function(answer){
 
-            var myFolder=answer;
+            myFolder=answer;
 
             if(fs.lstatSync(myFolder).isDirectory()){
 
@@ -102,7 +111,7 @@ var app=(function(){
 
                 cmd.ask("Enter value:", function(answer){
 
-                    var myTerm=answer;
+                    myTerm=answer;
 
                     if(myTerm.length>0){
                         console.log("searching for \""+myTerm+"\"");
@@ -113,9 +122,11 @@ var app=(function(){
                                 console.log("searching in "+result.length+" files");
 
                                 readFiles(result,myTerm,function(response){
-                                    
-                                    if(response!=""){
 
+                                    endtime=new Date().getTime();
+                                    console.log("search finished in "+ Math.round(Math.abs(starttime-endtime)/1000)+" seconds");
+                                    if(response!=""){
+                                        
                                         console.log("found \""+myTerm+"\" in "+response.length+" files");
 
                                         cmd.ask("Show results? (Y/N)", function(answer){
