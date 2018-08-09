@@ -95,13 +95,13 @@ var app=(function(){
         });
     }
 
-    //programm logic
+    //program logic
     var run=function(){
 
         starttime=new Date().getTime();
 
         console.log("process started");
-        cmd.ask("select dircetory:", function(answer){
+        cmd.ask("select directory:", function(answer){
 
             myFolder=answer;
 
@@ -156,7 +156,7 @@ var app=(function(){
                     }
                 });
             }else{
-                console.log("cirectory not found");
+                console.log("directory not found");
             }
         });
     }
